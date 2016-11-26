@@ -1,0 +1,21 @@
+<?php require(“views/header.html”);?>
+
+<h1>Submit classified</h1>
+
+<form method=”post” action=”submit.php”>
+
+    <input type=”hidden” name=”submit” value=”1″>
+
+    <input type=”hidden” name=”category_id” value=”<?=$_GET[‘category_id’]?>”>
+
+    <p><label>Title:</label> <input type=”text” name=”title”></p>
+
+    <p><label>Content:</label> <textarea name=”content”></textarea></p>
+
+    <p><label>Contact details:</label> <textarea name=”contacts”></textarea></p>
+
+    <p><input type=”submit” value=”Submit classified”></p>
+
+</form>
+
+<?php require(“views/footer.html”);?>
