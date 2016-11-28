@@ -1,0 +1,66 @@
+//if(isset($_POST['cls-btn'])){
+
+    $db = new mysqli(SERVER, USER, PASS, DATABASE);
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
+
+    $query = "SELECT customerID FROM loginData WHERE loginID=".$_SESSION['user'];
+    $result = $db->query($query);
+
+    $row = $result->fetch_assoc();
+
+
+
+    $target_dir = "uploads/";
+    $target_file = $target_dir . basename($_FILES["file"]["name"]);
+    $uploadOk = 1;
+    $imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
+
+    $check = getimagesize($_FILES["file"]["tmp_name"]);
+
+    if (file_exists($target_file)) {
+        $errorMSG = "File ALready Exists";
+        $uploadOk = 0;
+    }
+    if($check !== false) {
+        $uploadOk = 1;
+    } else {
+        $errorMSG = "Invalid File Type";
+        $uploadOk = 0;
+    }
+
+    if ($uploadOk == 0) {
+        $errorMSG = "Upload Failed.";
+  if everything is ok, try to upload file
+    } else {
+        if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
+            $errorMSG = "File OK";
+        } else {
+            $errorMSG = "Upload failed.";
+        }
+    }
+
+    $cid = uniqid();
+    $uid = $row['customerID'];
+    $email = $_POST['email'];
+    $info = $_POST['info'];
+    $days = $_POST['days'];
+
+    date_default_timezone_set('GMT');
+    $curdate = date('l jS \of F Y h:i:s A');
+
+    $query =  "INSERT into classifieds (classifiedID,userID,info,imagePath,uploadDate)" . "VALUES('$cid', '$uid', '$info', '$target_file', '$curdate')";
+    $result = $db->query($query);
+
+     if (!$result){
+        $errorMSG = "Error inserting into database";
+   
+    }
+
+
+    unset($_POST['cls-btn']);
+}

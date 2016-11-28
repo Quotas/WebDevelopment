@@ -11,12 +11,15 @@
 
 
 $errormsg = "";
-define("SERVER", "lochnagar.abertay.ac.uk");
-define("USER", "sql1602312");
-define("PASS", "ymC78stBq2m3");
-define("DATABASE", "sql1602312");
+define("SERVER", "127.0.0.1");
+define("USER", "root");
+define("PASS", "");
+define("DATABASE", "test");
 
-
+//define("SERVER", "lochnagar.abertay.ac.uk");
+//define("USER", "sql1602312");
+//define("PASS", "ymC78stBq2m3");
+//define("DATABASE", "sql1602312");
 
 function debug_to_console( $data ) {
 
@@ -27,8 +30,6 @@ function debug_to_console( $data ) {
 
     echo $output;
 }
-
-
 function verify($username, $password){
 
     
@@ -99,7 +100,7 @@ if(isset($_POST['btn-login']))
 
 
     }
-
+    unset($_POST['btn-login']);
 }
 
 

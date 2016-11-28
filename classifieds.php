@@ -4,12 +4,16 @@ session_start();
 if( !isset($_SESSION['user'])){
     header("Location: index.php");
 }
-$_SESSION['highestID'] = 0;
 
-define("SERVER", "lochnagar.abertay.ac.uk");
-define("USER", "sql1602312");
-define("PASS", "ymC78stBq2m3");
-define("DATABASE", "sql1602312");
+//define("SERVER", "lochnagar.abertay.ac.uk");
+//define("USER", "sql1602312");
+//define("PASS", "ymC78stBq2m3");
+//define("DATABASE", "sql1602312");
+
+define("SERVER", "127.0.0.1");
+define("USER", "root");
+define("PASS", "");
+define("DATABASE", "test");
 
 
 
@@ -48,11 +52,9 @@ function updateItems(){
         echo "<p class = \"card-text\">".$row['info']."</p>";
         echo "<a href=\"#\" class=\"btn btn-primary\">Buy</a>";
         echo "</div>";
-
-        if($row['classifiedID'] > $highestID){
-            $_SESSION['highestID'] = $row['classifiedID'];
-        }
     }
+
+    $db->close();
      
 
 
@@ -68,7 +70,7 @@ function logout(){
 }
 
 function getNewItem(){
-    echo "";
+    //echo "";
 }
 
 if (isset($_POST['btn-logout'])){
@@ -78,9 +80,69 @@ if (isset($_POST['btn-logout'])){
 
 if(isset($_POST['cls-btn'])){
 
-//add our new ad to our database and then refresh the page
+    $db = new mysqli(SERVER, USER, PASS, DATABASE);
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
 
+    $user = $_SESSION['user'];
+
+    $query = "SELECT customerID FROM loginData WHERE loginID='$user'";
+    $result = $db->query($query);
+
+    $row = $result->fetch_assoc();
+
+
+    $name = $_FILES["imageFile"]["name"];
+    //$size = $_FILES['file']['size']
+    //$type = $_FILES['file']['type']
+
+    $tmp_name = $_FILES['imageFile']['tmp_name'];
+    $error = $_FILES['imageFile']['error'];
+    $location = 'upload/';
+    $target_file = $location.$name;
+
+    if (isset ($name)) {
+        if (!empty($name)) {
+
+
+        if  (move_uploaded_file($tmp_name, $location.$name)){
+            $errorMSG = 'Uploaded';    
+         }
+
+        } else {
+                $errorMSG = 'please choose a file';
+          }
+        }
+    
+
+
+    $cid = uniqid();
+    $uid = $row['customerID'];
+    $email = $_POST['email'];
+    $info = $_POST['info'];
+    $days = $_POST['days'];
+
+    date_default_timezone_set('GMT');
+    $curdate = date('l jS \of F Y h:i:s A');
+
+    $query = "INSERT INTO classifieds(classifiedID,userID,info,imagePath,uploadDate) VALUES('$cid', '$uid', '$info', '$target_file', '$curdate')";
+    $result = $db->query($query);
+
+     if (!$result){
+        $errorMSG = "Error inserting into database";
+        echo $errorMSG;
+    }
+
+    unset($_POST['days']);
+    unset($_POST['info']);
+    unset($_POST['cls-btn']);
 }
+
+
 
 ?>
 
@@ -94,9 +156,8 @@ if(isset($_POST['cls-btn'])){
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
 
-    <title>Album example for Bootstrap</title>
+    <title>Classifieds or something</title>
 
 
 
@@ -159,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
   </script>
 
   <div id="dialog" title="Post an ad!">
-  <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off">
+  <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off" enctype="multipart/form-data">
   <div class="form-group">
     <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
     <small id="emailHelp" class="form-text text-muted">Contact Email</small>
@@ -182,12 +243,11 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
     <input type="file" name="imageFile" class="form-control-file" id="exampleInputFile" aria-describedby="fileHelp">
     <small id="fileHelp" class="form-text text-muted">Upload an image of the item you want to sell, must be smaller than 2mb.</small>
   </div>
-  <button type="submit" class="btn btn-primary" name="cls-btn">Post</button>
+  <button type="submit" class="btn btn-primary" name="cls-btn" >Post</button>
 </form>
+</div>
   
   
-  </div>
-
 
     <div class="navbar navbar-static-top navbar-dark bg-inverse">
         <div class="container-fluid">
