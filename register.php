@@ -10,12 +10,28 @@
 //$mysqlpassword = 'ymC78stBq2m3';
 //$database = 'sql1602312';
 
-define("SERVER", "127.0.0.1");
-define("USER", "root");
-define("PASS", "");
-define("DATABASE", "test");
+define("SERVER", "lochnagar.abertay.ac.uk");
+define("USER", "sql1602312");
+define("PASS", "ymC78stBq2m3");
+define("DATABASE", "sql1602312");
 
-$db = new mysqli(SERVER, USER, PASS, DATABASE);
+$server = "lochnagar.abertay.ac.uk";
+$uid = "sql1602312";
+$dbpass = "ymC78stBq2m3";
+$database = "sql1602312";
+
+
+function debug_to_console( $data ) {
+
+    if ( is_array( $data ) )
+        $output = "<script>console.log( 'Debug Objects: " . implode( ',', $data) . "' );</script>";
+    else
+        $output = "<script>console.log( 'Debug Objects: " . $data . "' );</script>";
+
+    echo $output;
+}
+
+$db = new mysqli($server, $uid, $dbpass, $database);
     if ($db->connect_errno) 
     {
         $errormsg = "CONNECT_ERROR";
@@ -63,7 +79,7 @@ $db = new mysqli(SERVER, USER, PASS, DATABASE);
    $emailError = "Please enter valid email address.";
   } else {
    // check email exist or not
-   $query = "SELECT userEmail FROM users WHERE userEmail='$email'";
+   $query = "SELECT userEmail FROM loginData WHERE userEmail='$email'";
    $result = $db->query($query);
    $count = mysql_num_rows($result);
    if($count!=0){
@@ -85,8 +101,8 @@ $db = new mysqli(SERVER, USER, PASS, DATABASE);
   
   // if there's no error, continue to signup
   if( !$error ) {
-   
-   $query = "INSERT INTO users(userName,userEmail,userPass) VALUES('$name','$email','$password')";
+   $customerID = uniqid();
+   $query = "INSERT INTO loginData(customerID,loginID,password,userEmail) VALUES('$customerID','$name','$password','$email')";
    $res = $db->query($query);
     
    if ($res) {

@@ -1,11 +1,7 @@
  <?php
  ob_start();
  session_start();
- // it will never let you open index(login) page if session is set
- if ( isset($_SESSION['user'])!="" ) {
-  header("Location: home.php");
-  exit;
- }
+
  
     
 //$server = 'lochnagar.abertay.ac.uk';
@@ -15,10 +11,10 @@
 
 
 $errormsg = "";
-define("SERVER", "127.0.0.1");
-define("USER", "root");
-define("PASS", "");
-define("DATABASE", "test");
+define("SERVER", "lochnagar.abertay.ac.uk");
+define("USER", "sql1602312");
+define("PASS", "ymC78stBq2m3");
+define("DATABASE", "sql1602312");
 
 
 
@@ -43,10 +39,9 @@ function verify($username, $password){
         debug_to_console( $db->connect_errno );
         return $errormsg;
     }
-
-    $query = "SELECT password FROM loginDATA WHERE username=" . $username;
+    debug_to_console($username);
+    $query = "SELECT loginID,password FROM loginData WHERE userEmail='$username'";
     $result = $db->query($query);
-
       
     if (!$result){
         
@@ -54,15 +49,18 @@ function verify($username, $password){
         return $errormsg;
     }
 
-    $hash = $result->fetch_assoc();
+    
+    $row = $result->fetch_assoc();
+    $hash = $row['password'];
+    $hashpass = hash('sha256', $password);
 
-
-    if (!password_verify($password, $hash)){
+    if ($hash != $hashpass){
         $errormsg =  'LOGIN_ERROR';
         return $errormsg;
     }
     else{
         $errormsg = "LOGIN_OKAY";
+        $_SESSION['user'] = $row['loginID'];
         return $errormsg;
 
     }
@@ -73,21 +71,28 @@ function verify($username, $password){
 }
 
 
-if (isset($_POST['btn-login'])){
+if(isset($_POST['btn-login']))
+{
+
+
     $username = $_POST['username'];
     $password = $_POST['password'];
+
+
 
     $loginresult = verify($username, $password);
 
     switch($loginresult){
         case "CONNECT_ERROR":
             $errormsg = "CouldNotConnect";
+            //header("Location: register.php");
             break;
         case "LOGIN_ERROR":
             $errormsg= "LoginError";
+
+            //header("Location: register.php");
             break;
         case "LOGIN_OKAY":
-            $_SESSION['user'] = $username;
             header("Location: classifieds.php");
             //navigate to our ebay page after successful login
             break;
@@ -135,9 +140,9 @@ if (isset($_POST['btn-login'])){
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <a class="navbar-brand" href="#">Home</a>
+                    <a class="navbar-brand" href="index.php">Home</a>
                     <li><a href="#">About</a></li>
-                    <li><a href="#">Fake Ebay</a></li>
+                    <li><a href="classifieds.php">Fake Ebay</a></li>
                 </ul>
                 <ul class="nav navbar-nav">
                     <li class="dropdown">
@@ -158,6 +163,13 @@ if (isset($_POST['btn-login'])){
                         </ul>
                     </li>
                 </ul>
+                <?php if (isset($_SESSION['user'])) { ?>
+                    <ul class="nav navbar-nav navbar-right">
+                    <p><?php echo $_SESSION['user']; ?></p>
+                    </ul>
+                
+               <?php }?>
+               <?php if (!isset($_SESSION['user'])) { ?>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-log-in"></span> Login<span class="caret"></span></a>
@@ -181,11 +193,6 @@ if (isset($_POST['btn-login'])){
                                     <input type="email" id="username" name="username" class="form-control" placeholder="Email address" required autofocus>
                                     <label for="inputPassword" class="sr-only">Password</label>
                                     <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
-                                    <div class="checkbox">
-                                        <label>
-                                            <input type="checkbox" value="remember-me"> Remember me
-                                        </label>
-                                    </div>
                                     <button class="btn btn-lg btn-primary btn-block" type="submit" name="btn-login">Sign in</button>
 
                                 </form>
@@ -196,6 +203,7 @@ if (isset($_POST['btn-login'])){
                         <li><a href="register.php"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
                     </li>
                 </ul>
+                <?php } ?>
             </div>
             <!-- /.navbar-collapse -->
         </div>

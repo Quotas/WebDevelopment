@@ -1,24 +1,86 @@
 <?php
 ob_start();
 session_start();
-//if( !isset($_SESSION['user'])){
-    //header("Location: index.php");
-//}
+if( !isset($_SESSION['user'])){
+    header("Location: index.php");
+}
+$_SESSION['highestID'] = 0;
 
-define("SERVER", "127.0.0.1");
-define("USER", "root");
-define("PASS", "");
-define("DATABASE", "test");
+define("SERVER", "lochnagar.abertay.ac.uk");
+define("USER", "sql1602312");
+define("PASS", "ymC78stBq2m3");
+define("DATABASE", "sql1602312");
+
+
+
+function debug_to_console( $data ) {
+
+    if ( is_array( $data ) )
+        $output = "<script>console.log( 'Debug Objects: " . implode( ',', $data) . "' );</script>";
+    else
+        $output = "<script>console.log( 'Debug Objects: " . $data . "' );</script>";
+
+    echo $output;
+}
 
 
 function updateItems(){
     $db = new mysqli(SERVER, USER, PASS, DATABASE);
-    $test = "Hello World";
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
 
-    echo "\"<div class='card'><p class='card-text'>". $test . " </p> </div>\"";
-    
+    $query = "SELECT * FROM classifieds";
+    //$result = $db->query($query);
+    $result = $db->query($query);
+
+    if ($result->num_rows == 0){
+        echo "Nothing to return";
+        exit;
+    }
+
+    while ($row = $result->fetch_assoc()) {       
+        echo "<div class= \"card\">";
+        echo "<img src=".$row['imagePath']."></img>";
+        echo "<p class = \"card-text\">".$row['info']."</p>";
+        echo "<a href=\"#\" class=\"btn btn-primary\">Buy</a>";
+        echo "</div>";
+
+        if($row['classifiedID'] > $highestID){
+            $_SESSION['highestID'] = $row['classifiedID'];
+        }
+    }
+     
+
+
 }
 
+function logout(){
+
+    session_unset();
+    session_destroy();
+    session_write_close();
+    $_SESSION = array();
+    header("Location: index.php");
+}
+
+function getNewItem(){
+    echo "";
+}
+
+if (isset($_POST['btn-logout'])){
+
+    logout();
+}
+
+if(isset($_POST['cls-btn'])){
+
+//add our new ad to our database and then refresh the page
+
+}
 
 ?>
 
@@ -56,19 +118,25 @@ function updateItems(){
 </head>
 
 <script type="text/javascript">
+
+    
     function refresh()
     {
 
-                dataDiv = document.getElementById('dataDiv');
-				var tempElement = document.createElement('div');
-                tempElement.innerHTML =  <?php updateItems();?> ;
+                //dataDiv = document.getElementById('dataDiv');
+				//var tempElement = document.createElement('div');
+                //tempElement.innerHTML =  <?php getNewItem();?> ;
 
-                dataDiv.appendChild(tempElement.firstChild);
+                //dataDiv.appendChild(tempElement.firstChild);
 
+    }
+
+    function test(){
+        console.log("Test");
     }
 document.addEventListener("DOMContentLoaded", function()  // This is the function the browser first runs when it's loaded.
 {
-	refresh() // Then runs the refresh function for the first time.
+	//refresh() // Then runs the refresh function for the first time.
 	//var int=self.setInterval(function(){refresh()},10000); // Set the refresh() function to run every 10 seconds. [1 second would be 1000, and 1/10th of a second would be 100 etc.
 });
 
@@ -77,45 +145,65 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
 <body>
 
   <script>
-  $( function() {
-    $( "#dialog" ).dialog({
-    autoOpen: false
-  });
-  } );
+              $(document).ready(function() {
+
+                $('#dialog').dialog({
+                    autoOpen: false,
+                    title: 'Post an ad!'
+                });
+                $('#opener').click(function() {
+                    $('#dialog').dialog('open');
+//                  return false;
+                });
+            });
   </script>
 
-  <div id="dialog" title="Basic dialog">
-  <p>This is the default dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the 'x' icon.</p>
+  <div id="dialog" title="Post an ad!">
+  <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off">
   <div class="form-group">
-                                <div class="input-group">
-                                    <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
-                                    <input type="text" name="name" class="form-control" placeholder="Enter Name" maxlength="50">
-                                </div>
-                            </div>
-</div>
+    <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
+    <small id="emailHelp" class="form-text text-muted">Contact Email</small>
+  </div>
+  <div class="form-group">
+    <label for="exampleTextarea">Classified Information.</label>
+    <textarea class="form-control" name="info" id="exampleTextarea" rows="3"></textarea>
+  </div>
+  <div class="form-group">
+    <label for="droplist">Select the number of days the ad will be active for (1$ per day).</label>
+    <select class="selectpicker" id="droplist" name="days">
+        <option>1</option>
+        <option>5</option>
+        <option>10</option>
+        <option>50</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="exampleInputFile">Upload File.</label>
+    <input type="file" name="imageFile" class="form-control-file" id="exampleInputFile" aria-describedby="fileHelp">
+    <small id="fileHelp" class="form-text text-muted">Upload an image of the item you want to sell, must be smaller than 2mb.</small>
+  </div>
+  <button type="submit" class="btn btn-primary" name="cls-btn">Post</button>
+</form>
+  
+  
+  </div>
 
-    <div class="navbar-collapse collapse inverse" id="navbar-header">
-        <div class="container-fluid">
-            <div class="about">
-                <h4>About</h4>
-                <p class="text-muted">Add some information about the album below, the author, or any other background context. Make it a few sentences long so folks can pick up some informative tidbits. Then, link them off to some social networking sites or contact information.</p>
-            </div>
-        </div>
-    </div>
+
     <div class="navbar navbar-static-top navbar-dark bg-inverse">
         <div class="container-fluid">
-            <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbar-header" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation"></button>
-            <a href="#" class="navbar-brand">Navigation</a>
+            <a href="#" class="navbar-brand"><?php echo $_SESSION['user'];?></a>
+            <form class="form-signin" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
+            <button class="btn btn-sm btn-primary" type="submit" name="btn-logout"><span class="glyphicon glyphicon-log-out"></span> Log out</button>
+            </form>
         </div>
     </div>
 
     <section class="jumbotron text-xs-center">
         <div class="container">
-            <h1 class="jumbotron-heading">Album example</h1>
-            <p class="lead text-muted">Something short and leading about the collection below—its contents, the creator, etc. Make it short and sweet, but not too short so folks don't simply skip over it entirely.</p>
-            <p>
-                <a href="#" class="btn btn-primary">Main call to action</a>
-                <a href="#" class="btn btn-secondary">Secondary action</a>
+            <h1 class="jumbotron-heading">Classifieds</h1>
+            <p class="lead text-muted">Below you can find all currently active classified ads, if you would like to buy one simply click the buy button and the funds will be deducted from your account.</p>
+            <p id="opener">
+                <button class="btn btn-primary">Post a classified ad.</button>
             </p>
         </div>
     </section>
@@ -124,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
         <div class="container">
 
             <div class="row" id="dataDiv">
-
+            <?php updateItems(); ?>
             </div>
 
         </div>
