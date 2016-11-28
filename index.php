@@ -1,3 +1,105 @@
+ <?php
+ ob_start();
+ session_start();
+ // it will never let you open index(login) page if session is set
+ if ( isset($_SESSION['user'])!="" ) {
+  header("Location: home.php");
+  exit;
+ }
+ 
+    
+//$server = 'lochnagar.abertay.ac.uk';
+//$uid = 'sql1602312';
+//$mysqlpassword = 'ymC78stBq2m3';
+//$database = 'sql1602312';
+
+
+$errormsg = "";
+define("SERVER", "127.0.0.1");
+define("USER", "root");
+define("PASS", "");
+define("DATABASE", "test");
+
+
+
+function debug_to_console( $data ) {
+
+    if ( is_array( $data ) )
+        $output = "<script>console.log( 'Debug Objects: " . implode( ',', $data) . "' );</script>";
+    else
+        $output = "<script>console.log( 'Debug Objects: " . $data . "' );</script>";
+
+    echo $output;
+}
+
+
+function verify($username, $password){
+
+    
+    $db = new mysqli(SERVER, USER, PASS, DATABASE);
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
+
+    $query = "SELECT password FROM loginDATA WHERE username=" . $username;
+    $result = $db->query($query);
+
+      
+    if (!$result){
+        
+        $errormsg = 'LOGIN_ERROR';
+        return $errormsg;
+    }
+
+    $hash = $result->fetch_assoc();
+
+
+    if (!password_verify($password, $hash)){
+        $errormsg =  'LOGIN_ERROR';
+        return $errormsg;
+    }
+    else{
+        $errormsg = "LOGIN_OKAY";
+        return $errormsg;
+
+    }
+
+    $db->close();
+
+
+}
+
+
+if (isset($_POST['btn-login'])){
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    $loginresult = verify($username, $password);
+
+    switch($loginresult){
+        case "CONNECT_ERROR":
+            $errormsg = "CouldNotConnect";
+            break;
+        case "LOGIN_ERROR":
+            $errormsg= "LoginError";
+            break;
+        case "LOGIN_OKAY":
+            $_SESSION['user'] = $username;
+            header("Location: classifieds.php");
+            //navigate to our ebay page after successful login
+            break;
+
+
+    }
+
+}
+
+
+
+?>
 <!DOCTYPE html>
 <html class="full" lang="en">
 
@@ -25,7 +127,6 @@
     <![endif]-->
 
 </head>
-
 <body>
 
     <!-- Navigation -->
@@ -69,13 +170,13 @@
                                     <strong>Error!</strong> Error Connecting to the Database.
                                 </div>
                                 <?php } ?>
-                                <?php if (isset($_GET['errormsg']) && $_GET['errormsg'] == "LoginError") { ?>
+                                <?php if (isset($errorMsg) && $errorMsg == "LoginError") { ?>
                                 <div class="alert alert-danger fade in">
                                     <a href="#" class="close" data-dismiss="alert" aria-label="close" title="close">&times;</a>
                                     <strong>Error!</strong> Invalid Username or Password.
                                 </div>
                                 <?php } ?>
-                                <form class="form-signin" action="login.php" method="POST">
+                                <form class="form-signin" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
                                     <label for="inputEmail" class="sr-only">Email address</label>
                                     <input type="email" id="username" name="username" class="form-control" placeholder="Email address" required autofocus>
                                     <label for="inputPassword" class="sr-only">Password</label>
@@ -85,14 +186,14 @@
                                             <input type="checkbox" value="remember-me"> Remember me
                                         </label>
                                     </div>
-                                    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+                                    <button class="btn btn-lg btn-primary btn-block" type="submit" name="btn-login">Sign in</button>
 
                                 </form>
 
                             </div>
 
                         </ul>
-                        <li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                        <li><a href="register.php"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
                     </li>
                 </ul>
             </div>
@@ -122,3 +223,4 @@
 </body>
 
 </html>
+<?php ob_end_flush(); ?>
