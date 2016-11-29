@@ -10,10 +10,12 @@ if( !isset($_SESSION['user'])){
 //define("PASS", "ymC78stBq2m3");
 //define("DATABASE", "sql1602312");
 
-define("SERVER", "127.0.0.1");
-define("USER", "root");
-define("PASS", "");
-define("DATABASE", "test");
+
+define("SERVER", "mysql.hostinger.co.uk");
+define("USER", "u180486004_root");
+define("PASS", "x7442nbb");
+define("DATABASE", "u180486004_cls");
+
 
 
 
@@ -42,15 +44,18 @@ function updateItems(){
     $result = $db->query($query);
 
     if ($result->num_rows == 0){
-        echo "Nothing to return";
         exit;
     }
 
     while ($row = $result->fetch_assoc()) {       
-        echo "<div class= \"card\">";
+        echo "<div class= \"card\" >";
         echo "<img src=".$row['imagePath']."></img>";
         echo "<p class = \"card-text\">".$row['info']."</p>";
-        echo "<a href=\"#\" class=\"btn btn-primary\">Buy</a>";
+        echo "<form method=\"POST\" action=\"classifieds.php\" autocomplete=\"off\" enctype=\"multipart/form-data\">";
+        echo "<input type=\"hidden\" name=\"cid\" value=".$row['classifiedID'].">";
+        echo "<input type=\"hidden\" name=\"price\" value=".$row['price'].">";
+        echo "<p><strong>".$row['price']."</strong></p><button class=\"btn btn-sm btn-primary\" name=\"buy-btn\" type=\"submit\">Buy</button>";
+        echo "</form>";
         echo "</div>";
     }
 
@@ -85,7 +90,7 @@ if(isset($_POST['cls-btn'])){
     {
         $errormsg = "CONNECT_ERROR";
         debug_to_console( $db->connect_errno );
-        return $errormsg;
+
     }
 
     $user = $_SESSION['user'];
@@ -110,11 +115,13 @@ if(isset($_POST['cls-btn'])){
 
 
         if  (move_uploaded_file($tmp_name, $location.$name)){
-            $errorMSG = 'Uploaded';    
+            $errorMSG = 'Uploaded'; 
+
          }
 
         } else {
                 $errorMSG = 'please choose a file';
+
           }
         }
     
@@ -122,24 +129,102 @@ if(isset($_POST['cls-btn'])){
 
     $cid = uniqid();
     $uid = $row['customerID'];
+
     $email = $_POST['email'];
     $info = $_POST['info'];
     $days = $_POST['days'];
+    $price = $_POST['cost'];
 
     date_default_timezone_set('GMT');
     $curdate = date('l jS \of F Y h:i:s A');
 
-    $query = "INSERT INTO classifieds(classifiedID,userID,info,imagePath,uploadDate) VALUES('$cid', '$uid', '$info', '$target_file', '$curdate')";
+    $query = "INSERT INTO classifieds(classifiedID,userID,info,imagePath,uploadDate,price) VALUES('$cid', '$uid', '$info', '$target_file', '$curdate', '$price')";
+
+
     $result = $db->query($query);
 
-     if (!$result){
+    if (!$result){
         $errorMSG = "Error inserting into database";
-        echo $errorMSG;
+
     }
 
+    $db->close();
+    unset($row['customerID']);
+    unset($_POST['email']);
+    unset($_POST['price']);
     unset($_POST['days']);
     unset($_POST['info']);
     unset($_POST['cls-btn']);
+}
+
+if (isset($_POST['buy-btn'])){
+
+
+    $cid = $_POST['cid'];
+    $price = $_POST['price'];
+
+    $db = new mysqli(SERVER, USER, PASS, DATABASE);
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
+
+    $user = $_SESSION['user'];
+    $query = "SELECT customerID FROM loginData WHERE loginID='$user'";
+    $result = $db->query($query);
+    if($result){
+        $errorMSG= "Success";
+    }else{
+        $errorMSG = "Failure";
+    }
+    $row = $result->fetch_assoc();
+    $uid = $row['customerID'];
+
+    $query = "UPDATE loginData SET money = money-'$price' WHERE customerID='$uid'";
+    $result = $db->query($query);
+    if($result){
+        $errorMSG= "Success";
+    }else{
+        $errorMSG = "Failure";
+    }
+
+    $query = "DELETE FROM classifieds WHERE classifiedID='$cid'";
+    $result = $db->query($query);
+    if($result){
+        $errorMSG= "Success";
+    }else{
+        $errorMSG = "Failure";
+    }
+
+    
+
+    
+
+    unset($_POST['buy-btn']);
+
+}
+
+function curMuns(){
+
+    $db = new mysqli(SERVER, USER, PASS, DATABASE);
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
+    $user = $_SESSION['user'];
+    $query = "SELECT money FROM loginData WHERE loginID='$user'";
+    $result = $db->query($query);
+
+    $row = $result->fetch_assoc();
+    $curmun = $row['money'];
+
+    echo "     $$curmun";
+
+    $db->close();
 }
 
 
@@ -210,13 +295,15 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
 
                 $('#dialog').dialog({
                     autoOpen: false,
-                    title: 'Post an ad!'
+                    title: 'Post an ad!',
+                    width: 500
                 });
                 $('#opener').click(function() {
                     $('#dialog').dialog('open');
 //                  return false;
                 });
             });
+      
   </script>
 
   <div id="dialog" title="Post an ad!">
@@ -238,12 +325,19 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
         <option>50</option>
     </select>
   </div>
+  <div class="input-group">
+  <span class="input-group-addon">$</span>
+  <input type="text" class="form-control" name="cost"  aria-describedby="priceHelp">
+  </div>
+  <small id="priceHelp" class="form-text text-muted">Listed Price.</small>
+  </br>
   <div class="form-group">
     <label for="exampleInputFile">Upload File.</label>
     <input type="file" name="imageFile" class="form-control-file" id="exampleInputFile" aria-describedby="fileHelp">
     <small id="fileHelp" class="form-text text-muted">Upload an image of the item you want to sell, must be smaller than 2mb.</small>
   </div>
-  <button type="submit" class="btn btn-primary" name="cls-btn" >Post</button>
+  
+  <button type="submit" class="btn btn-primary btn-block" name="cls-btn" >Post</button>
 </form>
 </div>
   
@@ -251,7 +345,7 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
 
     <div class="navbar navbar-static-top navbar-dark bg-inverse">
         <div class="container-fluid">
-            <a href="#" class="navbar-brand"><?php echo $_SESSION['user'];?></a>
+            <a href="#" class="navbar-brand"><?php echo $_SESSION['user']; echo curMuns();?></a>
             <form class="form-signin" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
             <button class="btn btn-sm btn-primary" type="submit" name="btn-logout"><span class="glyphicon glyphicon-log-out"></span> Log out</button>
             </form>
@@ -278,16 +372,6 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
         </div>
     </div>
 
-    <footer class="text-muted">
-        <div class="container">
-            <p class="float-xs-right">
-                <a href="#">Back to top</a>
-            </p>
-            <p>Album example is &copy; Bootstrap, but please download and customize it for yourself!</p>
-            <p>New to Bootstrap? <a href="../../">Visit the homepage</a> or read our <a href="../../getting-started/">getting started guide</a>.</p>
-        </div>
-    </footer>
-
     <!--Bootsrap requires Tether to not spit errors-->
     <script src="https://www.atlasestateagents.co.uk/javascript/tether.min.js"></script>
     <!-- Bootstrap Core JavaScript -->
@@ -297,3 +381,4 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
 </body>
 
 </html>
+<?php ob_end_flush(); ?>

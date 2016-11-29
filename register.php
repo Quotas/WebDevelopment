@@ -10,15 +10,11 @@
 //$mysqlpassword = 'ymC78stBq2m3';
 //$database = 'sql1602312';
 
-define("SERVER", "lochnagar.abertay.ac.uk");
-define("USER", "sql1602312");
-define("PASS", "ymC78stBq2m3");
-define("DATABASE", "sql1602312");
+define("SERVER", "mysql.hostinger.co.uk");
+define("USER", "u180486004_root");
+define("PASS", "x7442nbb");
+define("DATABASE", "u180486004_cls");
 
-$server = "lochnagar.abertay.ac.uk";
-$uid = "sql1602312";
-$dbpass = "ymC78stBq2m3";
-$database = "sql1602312";
 
 
 function debug_to_console( $data ) {
@@ -31,7 +27,7 @@ function debug_to_console( $data ) {
     echo $output;
 }
 
-$db = new mysqli($server, $uid, $dbpass, $database);
+$db = new mysqli(SERVER, USER, PASS, DATABASE);
     if ($db->connect_errno) 
     {
         $errormsg = "CONNECT_ERROR";
@@ -81,7 +77,7 @@ $db = new mysqli($server, $uid, $dbpass, $database);
    // check email exist or not
    $query = "SELECT userEmail FROM loginData WHERE userEmail='$email'";
    $result = $db->query($query);
-   $count = mysql_num_rows($result);
+   $count = $result->num_rows;
    if($count!=0){
     $error = true;
     $emailError = "Provided Email is already in use.";
@@ -101,7 +97,8 @@ $db = new mysqli($server, $uid, $dbpass, $database);
   
   // if there's no error, continue to signup
   if( !$error ) {
-   $customerID = uniqid();
+   $customerID = uniqid('', $more_entropy);
+   base_convert($customerID, 16, 36);
    $query = "INSERT INTO loginData(customerID,loginID,password,userEmail) VALUES('$customerID','$name','$password','$email')";
    $res = $db->query($query);
     

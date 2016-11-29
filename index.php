@@ -11,10 +11,13 @@
 
 
 $errormsg = "";
-define("SERVER", "127.0.0.1");
-define("USER", "root");
-define("PASS", "");
-define("DATABASE", "test");
+define("SERVER", "mysql.hostinger.co.uk");
+define("USER", "u180486004_root");
+define("PASS", "x7442nbb");
+define("DATABASE", "u180486004_cls");
+
+
+
 
 //define("SERVER", "lochnagar.abertay.ac.uk");
 //define("USER", "sql1602312");
