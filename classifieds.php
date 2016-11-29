@@ -99,6 +99,14 @@ if(isset($_POST['cls-btn'])){
     $result = $db->query($query);
 
     $row = $result->fetch_assoc();
+    $cid = uniqid();
+    $uid = $row['customerID'];
+
+    $email = $_POST['email'];
+    $info = $_POST['info'];
+    $days = (int)$_POST['days'];
+    $price = $_POST['cost'];
+
 
 
     $name = $_FILES["imageFile"]["name"];
@@ -110,30 +118,20 @@ if(isset($_POST['cls-btn'])){
     $location = 'upload/';
     $target_file = $location.$name;
 
-    if (isset ($name)) {
+    if (isset ($name)) {     
         if (!empty($name)) {
-
-
-        if  (move_uploaded_file($tmp_name, $location.$name)){
+            if  (move_uploaded_file($tmp_name, $location.$name)){
             $errorMSG = 'Uploaded'; 
+            $days += 10;
 
-         }
+        }
 
         } else {
+                $target_file = 'upload/default.png';
                 $errorMSG = 'please choose a file';
 
-          }
         }
-    
-
-
-    $cid = uniqid();
-    $uid = $row['customerID'];
-
-    $email = $_POST['email'];
-    $info = $_POST['info'];
-    $days = $_POST['days'];
-    $price = $_POST['cost'];
+    }
 
     date_default_timezone_set('GMT');
     $curdate = date('l jS \of F Y h:i:s A');
@@ -143,6 +141,14 @@ if(isset($_POST['cls-btn'])){
 
     $result = $db->query($query);
 
+    if (!$result){
+        $errorMSG = "Error inserting into database";
+
+    }
+
+    $clasprice = $days * 1.0;
+    $query = "UPDATE loginData SET money = money-'$clasprice' WHERE customerID='$uid'";
+    $result = $db->query($query);
     if (!$result){
         $errorMSG = "Error inserting into database";
 
@@ -190,6 +196,19 @@ if (isset($_POST['buy-btn'])){
         $errorMSG = "Failure";
     }
 
+    $query = "SELECT userID FROM classifieds WHERE classifiedID='$cid'";
+    $result = $db->query($query);
+    $row = $result->fetch_assoc();
+    $sellerid = $row['userID'];
+
+    $query = "UPDATE loginData SET money = money+'$price' WHERE customerID='$sellerid'";
+    $result = $db->query($query);
+    if($result){
+        $errorMSG= "Success";
+    }else{
+        $errorMSG = "Failure";
+    }
+
     $query = "DELETE FROM classifieds WHERE classifiedID='$cid'";
     $result = $db->query($query);
     if($result){
@@ -204,6 +223,36 @@ if (isset($_POST['buy-btn'])){
 
     unset($_POST['buy-btn']);
 
+}
+
+if (isset($_POST['charge'])){
+
+
+    $topup = $_POST['valinc'];
+    $user = $_SESSION['user'];
+
+    $db = new mysqli(SERVER, USER, PASS, DATABASE);
+    if ($db->connect_errno) 
+    {
+        $errormsg = "CONNECT_ERROR";
+        debug_to_console( $db->connect_errno );
+        return $errormsg;
+    }
+
+
+    $query = "UPDATE loginData SET money = money+'$topup' WHERE loginID='$user'";
+    $result = $db->query($query);
+    if($result){
+        $errorMSG= "Success";
+    }else{
+        $errorMSG = "Failure";
+    }
+
+
+
+
+    $db->close();
+    unset($_POST['charge']);
 }
 
 function curMuns(){
@@ -242,7 +291,7 @@ function curMuns(){
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Classifieds or something</title>
+    <title>Classifieds</title>
 
 
 
@@ -302,6 +351,40 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
                     $('#dialog').dialog('open');
 //                  return false;
                 });
+
+                $('#dialog2').dialog({
+                    autoOpen: false,
+                    title: 'Top up your account!',
+                    width: 500
+                });
+                $('#sec-opener').click(function() {
+                    $('#dialog2').dialog('open');
+//                  return false;
+                });
+
+
+                $('#five-btn').click(function() {
+                    var tmp = Number(document.getElementById('value').value);
+                    tmp += 5;
+                    document.getElementById('value').value = tmp;
+                });
+                $('#ten-btn').click(function() {
+                    var tmp = Number(document.getElementById('value').value);
+                    tmp += 10;
+                    document.getElementById('value').value = tmp;
+                });
+                $('#hun-btn').click(function() {
+                    var tmp = Number(document.getElementById('value').value);
+                    tmp += 100;
+                    document.getElementById('value').value = tmp;
+                });
+                $('#thou-btn').click(function() {
+                    var tmp = Number(document.getElementById('value').value);
+                    tmp += 1000;
+                    document.getElementById('value').value = tmp;
+                });
+
+
             });
       
   </script>
@@ -334,11 +417,29 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
   <div class="form-group">
     <label for="exampleInputFile">Upload File.</label>
     <input type="file" name="imageFile" class="form-control-file" id="exampleInputFile" aria-describedby="fileHelp">
-    <small id="fileHelp" class="form-text text-muted">Upload an image of the item you want to sell, must be smaller than 2mb.</small>
+    <small id="fileHelp" class="form-text text-muted">Upload an image of the item you want to sell, must be smaller than 2mb. (Images are an extra $10)</small>
   </div>
   
   <button type="submit" class="btn btn-primary btn-block" name="cls-btn" >Post</button>
 </form>
+</div>
+
+<div id="dialog2" title="Top up your money!">
+        <div class="form-check-inline">
+            <button class="btn btn-success" id="five-btn">$5</button>
+            <button class="btn btn-success" id="ten-btn" >$10</button>
+            <button class="btn btn-warning" id="hun-btn" >$100</button>
+            <button class="btn btn-danger"  id="thou-btn">$1000</button>
+            </br>
+        </div>
+    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off" enctype="multipart/form-data">
+        <div class="input-group">
+            <span class="input-group-addon">$</span>
+            <input class="form-control" id="value" name="valinc" type="number" placeholder="Readonly input here…" readonly>
+        </div>
+        </br>
+        <button type="submit" class="btn btn-primary btn-block" name="charge" >Charge</button>
+    </form>
 </div>
   
   
@@ -355,9 +456,12 @@ document.addEventListener("DOMContentLoaded", function()  // This is the functio
     <section class="jumbotron text-xs-center">
         <div class="container">
             <h1 class="jumbotron-heading">Classifieds</h1>
-            <p class="lead text-muted">Below you can find all currently active classified ads, if you would like to buy one simply click the buy button and the funds will be deducted from your account.</p>
+            <p class="lead text-muted">Below you can find all currently active classified ads, if you would like to buy one simply click the buy button and the funds will be deducted from your account. Otherwise click the 'post a classified ad' button to post your own classified ad!</p>
             <p id="opener">
                 <button class="btn btn-primary">Post a classified ad.</button>
+            </p>
+            <p id="sec-opener">
+                <button class="btn btn-success">Top up cash.</button>
             </p>
         </div>
     </section>

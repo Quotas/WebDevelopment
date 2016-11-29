@@ -120,7 +120,7 @@ if(isset($_POST['btn-login']))
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Web Development Blog / Classified Prototype</title>
+    <title>Web Development Blog </title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.css" rel="stylesheet">
@@ -145,8 +145,7 @@ if(isset($_POST['btn-login']))
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <a class="navbar-brand" href="index.php">Home</a>
-                    <li><a href="#">About</a></li>
-                    <li><a href="classifieds.php">Fake Ebay</a></li>
+                    <li><a href="classifieds.php">Classifieds Demo</a></li>
                 </ul>
                 <ul class="nav navbar-nav">
                     <li class="dropdown">
@@ -217,8 +216,9 @@ if(isset($_POST['btn-login']))
     <div class="container">
         <div class="row">
             <div class="col-md-6 col-sm-12">
-                <h1>Lorem ipsum</h1>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Magni, iusto, unde, sunt incidunt id sapiente rerum soluta voluptate harum veniam fuga odit ea pariatur vel eaque sint sequi tenetur eligendi.</p>
+                <h1>Seamus Salt Blog and Portfolio</h1>
+                <p>You will find on this site a demo of a classified ad website, and a link to 12 weeks of blog posts highlighting techniques used to create this website.</p>
+                
             </div>
         </div>
         <!-- /.row -->
